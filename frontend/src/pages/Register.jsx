@@ -139,7 +139,7 @@ const Register = () => {
             {error && (
               <div className="bg-gradient-to-r from-red-400 to-pink-400 border-3 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_#000000] animate-pulse">
                 <h3 className="text-white font-bold text-center drop-shadow-[2px_2px_0px_#000000]">
-                  ⚠️ Oops! Something went wrong
+                  ⚠️ Oops! Something went wrong. Please try again.
                 </h3>
               </div>
             )}

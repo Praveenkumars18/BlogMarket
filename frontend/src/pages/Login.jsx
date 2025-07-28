@@ -110,7 +110,7 @@ const Login = () => {
               
               {/* Error message */}
               {error && (
-                <div className="text-red-600 font-bold text-center mb-4">தவறான email அல்லது password!</div>
+                <div className="text-red-600 font-bold text-center mb-4">Incorrect email or password!</div>
               )}
               
               {/* Register link */}
