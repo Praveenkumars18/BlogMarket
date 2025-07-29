@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import {ImCross} from 'react-icons/im'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { UserContext } from '../context/UserContext'
 import { URL } from '../url'
 import axios from 'axios'
@@ -15,8 +15,17 @@ const CreatePost = () => {
     const {user}=useContext(UserContext)
     const [cat,setCat]=useState("")
     const [cats,setCats]=useState([])
+    const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false)
 
     const navigate=useNavigate()
+
+    // Redirect if not logged in
+    useEffect(() => {
+      if (!user) {
+        navigate("/login")
+      }
+    }, [user, navigate])
 
     const deleteCategory=(i)=>{
        let updatedCats=[...cats]
@@ -33,6 +42,21 @@ const CreatePost = () => {
 
     const handleCreate=async (e)=>{
         e.preventDefault()
+        
+        if (!user) {
+          setError("Please login to create a post")
+          navigate("/login")
+          return
+        }
+
+        if (!title || !desc) {
+          setError("Please fill in all required fields")
+          return
+        }
+
+        setLoading(true)
+        setError("")
+        
         const post={
           title,
           desc,
@@ -48,10 +72,13 @@ const CreatePost = () => {
           data.append("file",file)
           post.photo=filename
           try{
-            const imgUpload=await axios.post(URL+"/api/upload",data)
+            const imgUpload=await axios.post(URL+"/api/upload",data, {withCredentials:true})
           }
           catch(err){
             console.log(err)
+            setError("Failed to upload image")
+            setLoading(false)
+            return
           }
         }
         
@@ -61,6 +88,13 @@ const CreatePost = () => {
         }
         catch(err){
           console.log(err)
+          if (err.response?.status === 401) {
+            setError("Please login again")
+            navigate("/login")
+          } else {
+            setError("Failed to create post. Please try again.")
+          }
+          setLoading(false)
         }
     }
 
@@ -196,23 +230,29 @@ const CreatePost = () => {
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-center pt-4">
-                <button 
-                  onClick={handleCreate} 
-                  className='bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 w-full sm:w-auto text-white font-black px-12 py-6 border-4 border-black rounded-2xl shadow-[8px_8px_0px_0px_#000000] hover:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-2 hover:translate-y-2 transition-all duration-300 text-xl uppercase tracking-wider relative overflow-hidden group'
-                >
-                  <span className="relative z-10 flex items-center justify-center space-x-2">
-                    <span>🚀 Create Post</span>
-                  </span>
-                  
-                  {/* Button decoration */}
-                  <div className="absolute top-2 right-2 w-3 h-3 bg-yellow-300 rounded-full border-2 border-black opacity-80"></div>
-                  <div className="absolute bottom-2 left-2 w-2 h-2 bg-cyan-300 rounded-full border border-black opacity-80"></div>
-                  
-                  {/* Animated background */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                </button>
-              </div>
+              <button 
+                onClick={handleCreate}
+                disabled={loading}
+                className={`w-full px-6 py-5 text-xl font-black text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl border-3 border-black shadow-[8px_8px_0px_0px_#000000] hover:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-2 hover:translate-y-2 transition-all duration-300 transform hover:scale-105 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating Post...</span>
+                  </div>
+                ) : (
+                  '🚀 PUBLISH POST'
+                )}
+              </button>
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-gradient-to-r from-red-400 to-pink-400 border-3 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_#000000] animate-pulse">
+                  <h3 className="text-white font-bold text-center drop-shadow-[2px_2px_0px_#000000]">
+                    ⚠️ {error}
+                  </h3>
+                </div>
+              )}
             </form>
 
             {/* Bottom decorative strip */}
