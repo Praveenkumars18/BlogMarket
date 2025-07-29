@@ -1,82 +1,81 @@
-const express=require('express')
-const app=express()
-const mongoose=require('mongoose')
+const express = require('express');
+const app = express();
+const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();
-const cors=require('cors')
-const multer=require('multer')
-const path=require("path")
-const cookieParser=require('cookie-parser')
-const authRoute=require('./routes/auth')
-const userRoute=require('./routes/users')
-const postRoute=require('./routes/posts')
-const commentRoute=require('./routes/comments')
+const cors = require('cors');
+const multer = require('multer');
+const path = require("path");
+const cookieParser = require('cookie-parser');
 
-//database
-const connectDB=async()=>{
-    try{
-        await mongoose.connect(process.env.MONGO_URL)
-        console.log("database is connected successfully!")
+// Routes
+const authRoute = require('./routes/auth');
+const userRoute = require('./routes/users');
+const postRoute = require('./routes/posts');
+const commentRoute = require('./routes/comments');
 
+// Connect DB
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URL);
+        console.log("✅ Database is connected successfully!");
+    } catch (err) {
+        console.error("❌ MongoDB connection error:", err);
     }
-    catch(err){
-        console.log(err)
-    }
-}
+};
+
+// CORS Setup
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://blog-market-dti2.vercel.app',
+  'https://blog-market-dti2-git-main-praveenkumars-projects-97a2c056.vercel.app',
+  'https://blog-market-dti2-ak8qrd9b8-praveenkumars-projects-97a2c056.vercel.app'
+];
 
 app.use(cors({
-  origin: "https://blog-market-dti2.vercel.app/",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS: " + origin));
+    }
+  },
   credentials: true
 }));
 
-//middlewares
-app.use(express.json())
-app.use("/images",express.static(path.join(__dirname,"/images")))
 
-// const allowedOrigins = [
-//     'https://blog-market-dti2.vercel.app',
-//     'http://localhost:5173'
-//   ];
-  
-//   app.use(cors({
-//     origin: function (origin, callback) {
-//       // Allow requests with no origin (like mobile apps, curl, etc.)
-//       if (!origin || allowedOrigins.includes(origin)) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error('Not allowed by CORS: ' + origin));
-//       }
-//     },
-//     credentials: true
-//   }));
-  
-app.use(cookieParser())
-app.use("/api/auth",authRoute)
-app.use("/api/users",userRoute)
-app.use("/api/posts",postRoute)
-app.use("/api/comments",commentRoute)
+// Middlewares
+app.use(express.json());
+app.use(cookieParser());
+app.use("/images", express.static(path.join(__dirname, "/images")));
 
-//image upload
-const storage=multer.diskStorage({
-    destination:(req,file,fn)=>{
-        fn(null,"images")
+// API Routes
+app.use("/api/auth", authRoute);
+app.use("/api/users", userRoute);
+app.use("/api/posts", postRoute);
+app.use("/api/comments", commentRoute);
+
+// Upload Image
+const storage = multer.diskStorage({
+    destination: (req, file, fn) => {
+        fn(null, "images");
     },
-    filename:(req,file,fn)=>{
-        fn(null,req.body.img)
-        // fn(null,"image1.jpg")
+    filename: (req, file, fn) => {
+        fn(null, req.body.img); 
     }
-})
+});
 
-const upload=multer({storage:storage})
-app.post("/api/upload",upload.single("file"),(req,res)=>{
-    // console.log(req.body)
-    res.status(200).json("Image has been uploaded successfully!")
-})
+const upload = multer({ storage: storage });
+app.post("/api/upload", upload.single("file"), (req, res) => {
+    res.status(200).json("✅ Image has been uploaded successfully!");
+});
 
-app.get('/', (req, res) => res.send("API is running"))
+// Test Route
+app.get('/', (req, res) => res.send("✅ Backend API is running"));
 
-
-app.listen(process.env.PORT, () => {
-  connectDB()
-  console.log("app is running on port " + process.env.PORT)
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    connectDB();
+    console.log(`🚀 App is running on port http://localhost:${PORT}`);
 });
